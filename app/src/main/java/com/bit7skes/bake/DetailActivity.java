@@ -1,14 +1,9 @@
 package com.bit7skes.bake;
 
-import android.app.NotificationManager;
 import android.content.Intent;
-import android.media.session.MediaSession;
-import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.media.session.MediaSessionCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -28,7 +23,6 @@ import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
@@ -36,14 +30,8 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
-import com.google.android.exoplayer2.upstream.BandwidthMeter;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
-
-import org.w3c.dom.Text;
 
 import java.util.List;
 
@@ -59,9 +47,6 @@ public class DetailActivity extends AppCompatActivity implements View.OnClickLis
     private List<Step> stepList;
     private int currentStepNum;
     private SimpleExoPlayer mPlayer;
-    private NotificationManager mNotificationManager;
-    private static MediaSessionCompat mMediaSession;
-    private PlaybackStateCompat.Builder mStateBuilder;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -115,6 +100,10 @@ public class DetailActivity extends AppCompatActivity implements View.OnClickLis
             mNextStepButton.setVisibility(View.VISIBLE);
         }
 
+        initializeVideoPlayer();
+    }
+
+    private void initializeVideoPlayer() {
         if (mPlayer == null) {
             TrackSelector tmpTrackSelector = new DefaultTrackSelector();
             LoadControl tmpLoadControl = new DefaultLoadControl();
@@ -138,7 +127,21 @@ public class DetailActivity extends AppCompatActivity implements View.OnClickLis
 
                 @Override
                 public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-
+                    Log.d("ExoPlayer", "playWhenReady = " + playWhenReady);
+                    switch (playbackState) {
+                        case ExoPlayer.STATE_IDLE:
+                            Log.v("ExoPlayer", "State Idle");
+                            break;
+                        case ExoPlayer.STATE_BUFFERING:
+                            Log.v("ExoPlayer", "State Buffering");
+                            break;
+                        case ExoPlayer.STATE_READY:
+                            Log.v("ExoPlayer", "State Ready");
+                            break;
+                        case ExoPlayer.STATE_ENDED:
+                            Log.v("ExoPlayer", "State Ended");
+                            break;
+                    }
                 }
 
                 @Override
@@ -151,24 +154,31 @@ public class DetailActivity extends AppCompatActivity implements View.OnClickLis
 
                 }
             });
+
             mVideoPlayerView.setPlayer(mPlayer);
 
             String videoURL = stepList.get(currentStepNum).getVideoURL();
             Log.v("videoURL", videoURL);
+            MediaSource mediaSource = buildMediaSource(videoURL);
 
-            BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
-            String userAgent = Util.getUserAgent(this, "Bake");
-            DefaultHttpDataSourceFactory dataSourceFactory = new DefaultHttpDataSourceFactory(userAgent);
-            ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
-            MediaSource mediaSource = new ExtractorMediaSource(Uri.parse(videoURL),
-                    dataSourceFactory, extractorsFactory, null, null);
             mPlayer.prepare(mediaSource);
-            mPlayer.setPlayWhenReady(true);
+            //mPlayer.setPlayWhenReady(true);
         }
+    }
+    private MediaSource buildMediaSource(String url) {
+        String userAgent = Util.getUserAgent(this, "Bake");
+        return new ExtractorMediaSource(Uri.parse(url),
+                new DefaultHttpDataSourceFactory(userAgent),
+                new DefaultExtractorsFactory(),
+                null,
+                null);
     }
 
     @Override
     public void onClick(final View view) {
+        mPlayer.stop();
+        mPlayer.release();
+
         Log.v("onClick", "onClick");
         final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {

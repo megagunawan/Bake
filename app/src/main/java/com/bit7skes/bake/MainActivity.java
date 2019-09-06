@@ -61,16 +61,17 @@ public class MainActivity extends AppCompatActivity implements CakeAdapter.CakeA
         protected List<Cake> doInBackground(String... params) {
             URL myURL;
             String result = null;
+            List<Cake> cakes = null;
             try {
                 myURL = NetworkUtils.buildUrl();
                 result = NetworkUtils.getResponseFromHttpUrl(myURL);
+                Log.v("json", result);
+                final Gson gson = new Gson();
+                Type category = new TypeToken<List<Cake>>(){}.getType();
+                cakes = gson.fromJson(result, category);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            Log.v("json", result);
-            final Gson gson = new Gson();
-            Type category = new TypeToken<List<Cake>>(){}.getType();
-            List<Cake> cakes = gson.fromJson(result, category);
             return cakes;
         }
 
