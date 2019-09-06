@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 
-
+@SuppressWarnings("serial")
 public class Ingredient implements Serializable {
     @SerializedName("quantity")
     @Expose

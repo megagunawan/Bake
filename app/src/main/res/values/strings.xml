@@ -3,4 +3,7 @@
     <string name="detail_error_message">Cake Not Found</string>
     <string name="previous_step">Previous Step</string>
     <string name="next_step">Next Step</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
+    <string name="no_recent_recipe">You have not opened any recipe recently.</string>
 </resources>

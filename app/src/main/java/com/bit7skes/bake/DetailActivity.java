@@ -1,9 +1,11 @@
 package com.bit7skes.bake;
 
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -14,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bit7skes.bake.models.Cake;
+import com.bit7skes.bake.models.Ingredient;
 import com.bit7skes.bake.models.Step;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -33,6 +36,8 @@ import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DetailActivity extends AppCompatActivity implements View.OnClickListener {
@@ -45,6 +50,7 @@ public class DetailActivity extends AppCompatActivity implements View.OnClickLis
     private Button mPreviousStepButton;
     private Cake clickedCake;
     private List<Step> stepList;
+    private List<Ingredient> ingredientList = new ArrayList<>();
     private int currentStepNum;
     private SimpleExoPlayer mPlayer;
 
@@ -75,6 +81,8 @@ public class DetailActivity extends AppCompatActivity implements View.OnClickLis
         currentStepNum = intent.getIntExtra("currentStepNum", currentStepNum);
         Log.v("currentStepNum", "" + currentStepNum);
         stepList = clickedCake.getSteps();
+        ingredientList = clickedCake.getIngredients();
+        sendIntentToWidget();
 
         loadCake();
     }
@@ -101,6 +109,19 @@ public class DetailActivity extends AppCompatActivity implements View.OnClickLis
         }
 
         initializeVideoPlayer();
+    }
+
+    private void sendIntentToWidget() {
+        try {
+            Intent intent = new Intent(this, IngredientWidget.class);
+            intent.setAction("update_widget");
+            intent.putExtra("ingredientList", (Serializable) ingredientList);
+            intent.putExtra("cakeName", clickedCake.getName());
+            PendingIntent pending = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+            pending.send();
+        } catch (PendingIntent.CanceledException e) {
+            e.printStackTrace();
+        }
     }
 
     private void initializeVideoPlayer() {
